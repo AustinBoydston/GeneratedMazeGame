@@ -1,9 +1,10 @@
 import pygame as pg
 import numpy as np
 import sys
+import time
 import random
 
-MAZE_SIZE = 20
+MAZE_SIZE = 36
 CUBE_SIZE = 10
 WALL_SIZE = 20
 
@@ -34,32 +35,43 @@ def initMaze(size):
 
 # Check if the frontier cell is a valid next cell
 def isValidFrontier(maze, maze_weights, x, y):
+    path_neighbors = 0
     # is the frontier cell already a path?
     if maze[x][y] == 0:
         return False
-    # is the frontier cell bordering an existing path? (0 means it has no other path neighbor)
-    if maze_weights[x][y] > 0:
+    if maze_weights[x][y] > 10:
+        return False
+    # determine if the frontier wall has exactly one neighbor
+    if maze[x+1][y] == 0:
+        path_neighbors += 1
+    if maze[x][y+1] == 0:
+        path_neighbors += 1
+    if maze[x-1][y] == 0:
+        path_neighbors += 1
+    if maze[x][y-1] == 0:
+        path_neighbors += 1
+    if path_neighbors > 1:
         return False
     return True
 
 # get the frontier cells reletive to the current cell
 def getFrontier(maze, maze_weights, x, y):
     frontier = []
-    maze_weights_copy = maze_weights
+    maze_weights
     
-    if isValidFrontier(maze, maze_weights_copy, x+1, y):
+    if isValidFrontier(maze, maze_weights, x+1, y):
         frontier.append([x+1, y])
-    if isValidFrontier(maze, maze_weights_copy, x, y+1):
+    if isValidFrontier(maze, maze_weights, x, y+1):
         frontier.append([x, y+1])
-    if isValidFrontier(maze, maze_weights_copy, x-1, y):
+    if isValidFrontier(maze, maze_weights, x-1, y):
         frontier.append([x-1, y])
-    if isValidFrontier(maze, maze_weights_copy, x, y-1):
+    if isValidFrontier(maze, maze_weights, x, y-1):
         frontier.append([x, y-1])
     return frontier
     
 
 # Generate the maze
-def generateMaze(size):
+def generateMaze(size, surface):
     maze, maze_weights = initMaze(size)
     start = chooseRandomStart(size)
     
@@ -74,7 +86,7 @@ def generateMaze(size):
     frontier = getFrontier(maze, maze_weights, start[0], start[1])
     # main generation loop
     while True:
-
+        time.sleep(.001)
         # set current cell to a path cell
         maze[cell_stack[-1][0]][cell_stack[-1][1]] = 0
 
@@ -84,11 +96,50 @@ def generateMaze(size):
         # check if the frontier is empty
         if len(frontier) == 0:
             # write back tracking code here
-            # stop loop for now
-            break
+            
+            #pop off current cell and get last cell
+            cell_stack.pop()
+            #if the cell stack is empty (backtracking is done) stop the generating loop
+            if len(cell_stack) == 0:
+                break
+            #print("size of cell stack during back track: ", len(cell_stack))
+            #Get the current maze coordinates after back tracking once
+            back_x, back_y = cell_stack[-1][0], cell_stack[-1][1]
+            #decrement last cell's frontier weights in a copy of maze_wieghts so that the actual values are not changed
+            #maze_weights_copy1 = maze_weights
+            
+            if maze[back_x+1][back_y] == 1:
+                maze_weights[back_x+1][back_y] -= 1
+            if maze[back_x-1][back_y] == 1:
+                maze_weights[back_x-1][back_y] -= 1
+            if maze[back_x][back_y+1] == 1:
+                maze_weights[back_x][back_y+1] -= 1
+            if maze[back_x][back_y-1] == 1:
+                maze_weights[back_x][back_y-1] -= 1
+            #get valid frontier of current cell
+            frontier = getFrontier(maze, maze_weights, back_x, back_y)
+            print("current position: ", back_x, ", ", back_y, "Valid Frontier: ", frontier)
+            #time.sleep(.2)
+            #check if there are any valid frontier items
+            if len(frontier) == 0:
+                # if not, do nothing and let the next loop back track again
+                pass
+            else:
+                # if yes, get a random valid one and push it onto the cell stack
+                # get random valid frontier item
+                random_frontier = random.randint(0, len(frontier) - 1)
+                # push chosen frontier item onto the path stack
+                cell_stack.append([frontier[random_frontier][0],frontier[random_frontier][1]] )
+                # increment frontier weights (set path weight to 500) to say there is an additional neighbor path cell
+                for i in range(len(frontier)):
+                    if i == random_frontier:
+                        maze_weights[frontier[i][0]][frontier[i][1]] = 500    
+                    else:
+                        maze_weights[frontier[i][0]][frontier[i][1]] += 1
         else:
             # get random valid frontier item
             random_frontier = random.randint(0, len(frontier) - 1)
+            # push chosen frontier item onto the path stack
             cell_stack.append([frontier[random_frontier][0],frontier[random_frontier][1]] )
             # increment frontier weights (set path weight to 500) to say there is an additional neighbor path cell
             for i in range(len(frontier)):
@@ -96,9 +147,19 @@ def generateMaze(size):
                     maze_weights[frontier[i][0]][frontier[i][1]] = 500    
                 else:
                     maze_weights[frontier[i][0]][frontier[i][1]] += 1
-    return maze
+        drawGeneratingMaze(maze, surface)
+        # if we have back tracked to the start, stop carving out paths
+        if len(cell_stack) == 0:
+            break
 
-# draw the maze given a MAZE_SIZExMAZE_SIZE maze and a surface
+    return maze, start
+
+def drawGeneratingMaze(maze, surf):
+    drawMaze(maze, surf)
+    pg.display.flip()
+
+
+# draw the maze given a MAZE_SIZE x MAZE_SIZE maze and a surface
 def drawMaze(maze, surface_):
     for i in range(MAZE_SIZE):
         for j in range(MAZE_SIZE):
@@ -114,6 +175,7 @@ def drawMaze(maze, surface_):
                 pg.draw.rect(surface_, (0, 0, 255), r)
             else:
                 exit()
+    
     
 # detect collision based off of the four corners of the player model
 def colliding(maze, playerx, playery):
@@ -145,7 +207,7 @@ def colliding(maze, playerx, playery):
 
 
 # Screen dimensions
-WIDTH, HEIGHT = 1080, 720
+WIDTH, HEIGHT = 720, 720
 # Create the display
 window = pg.display.set_mode((WIDTH, HEIGHT))
 pg.display.set_caption("maze game")
@@ -172,8 +234,7 @@ maze = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         ]
 
-#set the maze to a generated one instead of the hardcoded one above
-maze = generateMaze(MAZE_SIZE)
+
 
 # Colors
 BLACK = (0, 0, 0)
@@ -181,16 +242,21 @@ RED = (255, 0, 0)
 
 # Set up the display
 screen = pg.display.set_mode((WIDTH, HEIGHT))
-pg.display.set_caption("Basic pg Game")
+disp = pg.display.set_caption("Basic pg Game")
 
 # Clock for controlling frame rate
 clock = pg.time.Clock()
 FPS = 60
 
+#set the maze to a generated one instead of the hardcoded one above
+maze, player_start = generateMaze(MAZE_SIZE, screen)
+
 # Player properties
 player_width, player_height = CUBE_SIZE, CUBE_SIZE
-player_x, player_y = 30, 30#WIDTH // 2, HEIGHT // 2
+player_x, player_y = player_start[0] * WALL_SIZE+ 3, player_start[1] * WALL_SIZE + 3 #WIDTH // 2, HEIGHT // 2
 player_speed = 3
+
+
 
 # attempt to draw maze
 drawMaze(maze, screen)
