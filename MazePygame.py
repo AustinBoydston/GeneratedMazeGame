@@ -4,12 +4,13 @@ import sys
 import time
 import random
 
-MAZE_SIZE = 36
-CUBE_SIZE = 10
-WALL_SIZE = 20
 
-#initialize pygame
-pg.init()
+############################################ Global Variables ########################
+MAZE_SIZE = 36 # Maze height and width
+CUBE_SIZE = 10 # Player
+WALL_SIZE = 20 # Walls
+GENERATE_SPEED = 0.001 # time for the sleep function to wait when generating maze
+############################################ Functions #############################
 
 # choose a random start location that is not the outside wall
 def chooseRandomStart(size):
@@ -43,6 +44,31 @@ def chooseExit(maze, start_x, start_y):
                 break
     maze[endx][endy] = 2
     return maze
+
+
+def detectExit(maze, playerx, playery):
+    # top left of player
+    newx_tl = (playerx)//WALL_SIZE
+    newy_tl = (playery)//WALL_SIZE
+    
+    # bottom left of player
+    newx_bl = (playerx)//WALL_SIZE
+    newy_bl = (playery + CUBE_SIZE - 1)//WALL_SIZE
+    
+    # top right of player
+    newx_tr = (playerx + CUBE_SIZE - 1)//WALL_SIZE
+    newy_tr = (playery)//WALL_SIZE
+    
+    # botom right of player
+    newx_br = (playerx+ CUBE_SIZE - 1)//WALL_SIZE
+    newy_br = (playery+ CUBE_SIZE - 1)//WALL_SIZE
+    
+
+    if maze[newx_tl][newy_tl] == 2 and maze[newx_bl][newy_bl] == 2 and maze[newx_tr][newy_tr] == 2 and maze[newx_br][newy_br] == 2:
+        return True
+    else:
+        return False
+
 
 
 # Check if the frontier cell is a valid next cell
@@ -98,7 +124,7 @@ def generateMaze(size, surface):
     frontier = getFrontier(maze, maze_weights, start[0], start[1])
     # main generation loop
     while True:
-        time.sleep(.001)
+        time.sleep(GENERATE_SPEED)
         # set current cell to a path cell
         maze[cell_stack[-1][0]][cell_stack[-1][1]] = 0
 
@@ -218,107 +244,123 @@ def colliding(maze, playerx, playery):
 
 
 
-# Screen dimensions
-WIDTH, HEIGHT = 720, 720
-# Create the display
-window = pg.display.set_mode((WIDTH, HEIGHT))
-pg.display.set_caption("maze game")
+##################################### Main ################################## 
+def main():
+    # Screen dimensions
+    WIDTH, HEIGHT = 720, 720
+    # Create the display
+    window = pg.display.set_mode((WIDTH, HEIGHT))
+    pg.display.set_caption("maze game")
 
-maze = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-        [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1],
-        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1],
-        [1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1],
-        [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1],
-        [1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
-        [1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-        ]
-
-
-
-# Colors
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-
-# Set up the display
-screen = pg.display.set_mode((WIDTH, HEIGHT))
-disp = pg.display.set_caption("Basic pg Game")
-
-# Clock for controlling frame rate
-clock = pg.time.Clock()
-FPS = 60
-
-#set the maze to a generated one instead of the hardcoded one above
-maze, player_start = generateMaze(MAZE_SIZE, screen)
-
-# Player properties
-player_width, player_height = CUBE_SIZE, CUBE_SIZE
-player_x, player_y = player_start[0] * WALL_SIZE+ 3, player_start[1] * WALL_SIZE + 3 #WIDTH // 2, HEIGHT // 2
-player_speed = 3
+    maze = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1],
+            [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+            ]
 
 
 
-# attempt to draw maze
-drawMaze(maze, screen)
+    # Colors
+    BLACK = (0, 0, 0)
+    RED = (255, 0, 0)
+
+    # Set up the display
+    screen = pg.display.set_mode((WIDTH, HEIGHT))
+    disp = pg.display.set_caption("Basic pg Game")
+
+    # Clock for controlling frame rate
+    clock = pg.time.Clock()
+    FPS = 60
+
+    #set the maze to a generated one instead of the hardcoded one above
+    maze, player_start = generateMaze(MAZE_SIZE, screen)
+
+    # Player properties
+    player_width, player_height = CUBE_SIZE, CUBE_SIZE
+    player_x, player_y = player_start[0] * WALL_SIZE+ 3, player_start[1] * WALL_SIZE + 3 #WIDTH // 2, HEIGHT // 2
+    player_speed = 3
 
 
 
-# Game loop
-running = True
-while running:
-    for event in pg.event.get():
-        if event.type == pg.QUIT:
-            running = False
-
-    
-    new_x, new_y = player_x, player_y
-    # Get keys pressed
-    keys = pg.key.get_pressed()
-    if keys[pg.K_UP]:
-        new_y -= player_speed
-    if keys[pg.K_DOWN]:
-        new_y += player_speed
-    if keys[pg.K_LEFT]:
-        new_x -= player_speed
-    if keys[pg.K_RIGHT]:
-        new_x += player_speed
-
-    # Detect collision
-    if not colliding(maze, new_x, new_y):
-        player_x = new_x
-        player_y = new_y
-    
-    # Keep player within screen bounds
-    player_x = max(0, min(WIDTH - player_width, player_x))
-    player_y = max(0, min(HEIGHT - player_height, player_y))
-
-    # Draw everything
-    screen.fill(BLACK)  # Clear the screen
-    
+    # attempt to draw maze
     drawMaze(maze, screen)
 
-    pg.draw.rect(screen, RED, (player_x, player_y, player_width, player_height))
+
+
+    # Game loop
+    running = True
+    while running:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                running = False
+
+
+        new_x, new_y = player_x, player_y
+        # Get keys pressed
+        keys = pg.key.get_pressed()
+        if keys[pg.K_UP]:
+            new_y -= player_speed
+        if keys[pg.K_DOWN]:
+            new_y += player_speed
+        if keys[pg.K_LEFT]:
+            new_x -= player_speed
+        if keys[pg.K_RIGHT]:
+            new_x += player_speed
+
+        # Detect collision
+        if not colliding(maze, new_x, new_y):
+            player_x = new_x
+            player_y = new_y
+        #Exit the main function if escape is successful. Generate a new maze.
+        if detectExit(maze, new_x, new_y):
+            return 1
+
+        # Keep player within screen bounds
+        player_x = max(0, min(WIDTH - player_width, player_x))
+        player_y = max(0, min(HEIGHT - player_height, player_y))
+
+        # Draw everything
+        screen.fill(BLACK)  # Clear the screen
+
+        drawMaze(maze, screen)
+
+        pg.draw.rect(screen, RED, (player_x, player_y, player_width, player_height))
 
 
 
-    # Update the display
-    pg.display.flip()
+        # Update the display
+        pg.display.flip()
 
-    # Cap the frame rate
-    clock.tick(FPS)
+        # Cap the frame rate
+        clock.tick(FPS)
+
+
+#############################################Running Code##########################
+
+#initialize pygame
+pg.init()
+
+#infinite game loop
+while True:
+    main()
 
 # Quit pg
 pg.quit()
 sys.exit()
+
