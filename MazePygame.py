@@ -33,6 +33,18 @@ def initMaze(size):
     #print(maze)
     return maze, maze_weights
 
+# choose a random path cell as the maze exit
+def chooseExit(maze, start_x, start_y):
+    while True:
+        endx = random.randint(1, MAZE_SIZE - 2)
+        endy = random.randint(1, MAZE_SIZE - 2) 
+        if ((start_x - endx)**2)**(1/2) >= MAZE_SIZE - (MAZE_SIZE/2) -1 and ((start_y - endy)**2)**(1/2) >= MAZE_SIZE - (MAZE_SIZE/2) - 1:  
+            if maze[endx][endy] == 0:
+                break
+    maze[endx][endy] = 2
+    return maze
+
+
 # Check if the frontier cell is a valid next cell
 def isValidFrontier(maze, maze_weights, x, y):
     path_neighbors = 0
@@ -151,7 +163,7 @@ def generateMaze(size, surface):
         # if we have back tracked to the start, stop carving out paths
         if len(cell_stack) == 0:
             break
-
+    maze = chooseExit(maze, start[0], start[1])
     return maze, start
 
 def drawGeneratingMaze(maze, surf):
@@ -199,7 +211,7 @@ def colliding(maze, playerx, playery):
     
     if newx_tl + 1> MAZE_SIZE or newy_tl+1 > MAZE_SIZE:
         return False
-    if maze[newx_tl][newy_tl] or maze[newx_bl][newy_bl] or maze[newx_tr][newy_tr] or maze[newx_br][newy_br]:
+    if maze[newx_tl][newy_tl] == 1 or maze[newx_bl][newy_bl] == 1 or maze[newx_tr][newy_tr] == 1 or maze[newx_br][newy_br] == 1:
         return True
     else:
         return False
