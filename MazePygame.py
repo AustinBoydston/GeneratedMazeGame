@@ -5,29 +5,30 @@ import random
 
 
 ############################################ Global Variables ########################
-MAZE_SIZE = 36 * 2 # Maze height and width
-CUBE_SIZE = 10 // 2# Player
-WALL_SIZE = 20 // 2# Walls
+MAZE_SIZE = 36 #* 2 # Maze height and width
+CUBE_SIZE = 10 #// 2# Player
+WALL_SIZE = 20 #// 2# Walls
 GENERATE_SPEED = 0.00001 # time for the sleep function to wait when generating maze
 
 ############################################ Class Definitions #############################
 
 
 class Maze:
-    def __init__(self, size_n, size_wall, ):
+    def __init__(self, size_n, size_wall, surface):
         self.size = size_n
         self.wall_size = size_wall
+        self.surface = surface
         self.maze, self.maze_weights = self.initMaze(self.size)
-        self.maze, self.maze_weights, self.start = self.generateMaze(self.maze, self.maze_weights, self.size)
+        self.maze, self.maze_weights, self.start = self.generateMaze(self.maze, self.maze_weights, self.size, self.surface)
         self.maze = self.chooseExit(self.maze, self.start[0], self.start[1])
-
+        
 
 
     ########## Getter Methods #########
 
 
     
-        # choose a random start location that is not the outside wall
+    # choose a random start location that is not the outside wall
     def chooseRandomStart(self, size):
         start =  [random.randint(1, size - 2), random.randint(1, size - 2)]
         return start
@@ -151,7 +152,7 @@ class Maze:
         return maze, maze_weights, cell_stack, 1
 
     # Generate the maze
-    def generateMaze(self, maze, maze_weights, size):
+    def generateMaze(self, maze, maze_weights, size, surface):
         start = self.chooseRandomStart(size)
 
         # the main cell stack 
@@ -166,9 +167,11 @@ class Maze:
         # main generation loop
         while True:
             #time.sleep(GENERATE_SPEED)
+
+
             # set current cell to a path cell
             maze[cell_stack[-1][0]][cell_stack[-1][1]] = 0
-
+            drawMaze(maze, surface, True)
             # get the frontier of the current path cell
             frontier = self.getFrontier(maze, maze_weights, cell_stack[-1][0], cell_stack[-1][1])
 
@@ -181,7 +184,7 @@ class Maze:
                 # stage new cell for path digging
                 maze, maze_weights, cell_stack = self.digPath(maze, maze_weights, cell_stack, frontier)
                 
-            #drawGeneratingMaze(maze, surface)
+         
             # if we have back tracked to the start, stop carving out paths
             if len(cell_stack) == 0:
                 break
@@ -259,21 +262,8 @@ class Player:
 
 
 
-
-
-
-
-
-    
-
-
-def drawGeneratingMaze(maze, surf):
-    drawMaze(maze, surf)
-    pg.display.flip()
-
-
 # draw the maze given a MAZE_SIZE x MAZE_SIZE maze and a surface
-def drawMaze(maze, surface_):
+def drawMaze(maze, surface_, generating):
     for i in range(MAZE_SIZE):
         for j in range(MAZE_SIZE):
             r = (WALL_SIZE*i, WALL_SIZE*j, WALL_SIZE, WALL_SIZE)
@@ -288,6 +278,9 @@ def drawMaze(maze, surface_):
                 pg.draw.rect(surface_, (0, 0, 255), r)
             else:
                 exit()
+            #If the maze is generating, animate the generation
+            if generating:
+                pg.display.update(r)
     
     
 
@@ -315,7 +308,7 @@ def main():
 
     #set the maze to a generated one instead of the hardcoded one above
     #maze, player_start = generateMaze(MAZE_SIZE, screen)
-    maze_ = Maze(MAZE_SIZE, WALL_SIZE)
+    maze_ = Maze(MAZE_SIZE, WALL_SIZE, screen)
     # Player properties
     player_width, player_height = CUBE_SIZE, CUBE_SIZE
     player_x, player_y = maze_.start[0] * WALL_SIZE+ 3, maze_.start[1] * WALL_SIZE + 3 #WIDTH // 2, HEIGHT // 2
@@ -326,7 +319,7 @@ def main():
 
 
     # attempt to draw maze
-    drawMaze(maze_.maze, screen)
+    drawMaze(maze_.maze, screen, False)
 
 
 
@@ -365,7 +358,7 @@ def main():
         # Draw everything
         screen.fill(BLACK)  # Clear the screen
 
-        drawMaze(maze_.maze, screen)
+        drawMaze(maze_.maze, screen, False)
 
         pg.draw.rect(screen, RED, (player1.player_x, player1.player_y, player1.width, player1.height))
 
