@@ -4,16 +4,18 @@ import time
 import random
 
 
-############################################ Global Variables ########################
-MAZE_SIZE = 36 #* 2 # Maze height and width
-CUBE_SIZE = 10 #// 2# Player
-WALL_SIZE = 20 #// 2# Walls
-GENERATE_SPEED = 0.00001 # time for the sleep function to wait when generating maze
-
 ############################################ Class Definitions #############################
+
+class Config:
+    MAZE_SIZE = 36 #* 2 # Maze height and width
+    CUBE_SIZE = 10 #// 2# Player
+    WALL_SIZE = 20 #// 2# Walls
+    GENERATE_SPEED = 0.00001 # time for the sleep function to wait when generating maze
+
 
 
 class Maze:
+    config = Config()
     def __init__(self, size_n, size_wall, surface):
         self.size = size_n
         self.wall_size = size_wall
@@ -21,7 +23,7 @@ class Maze:
         self.maze, self.maze_weights = self.initMaze(self.size)
         self.maze, self.maze_weights, self.start = self.generateMaze(self.maze, self.maze_weights, self.size, self.surface)
         self.maze = self.chooseExit(self.maze, self.start[0], self.start[1])
-        
+        self.config = Config()
 
 
     ########## Getter Methods #########
@@ -55,9 +57,9 @@ class Maze:
     # choose a random path cell as the maze exit
     def chooseExit(self, maze, start_x, start_y):
         while True:
-            endx = random.randint(1, MAZE_SIZE - 2)
-            endy = random.randint(1, MAZE_SIZE - 2) 
-            if ((start_x - endx)**2)**(1/2) >= MAZE_SIZE - (MAZE_SIZE/2) -1 and ((start_y - endy)**2)**(1/2) >= MAZE_SIZE - (MAZE_SIZE/2) - 1:  
+            endx = random.randint(1, self.config.MAZE_SIZE - 2)
+            endy = random.randint(1, self.config.MAZE_SIZE - 2) 
+            if ((start_x - endx)**2)**(1/2) >= self.config.MAZE_SIZE - (self.config.MAZE_SIZE/2) -1 and ((start_y - endy)**2)**(1/2) >= self.config.MAZE_SIZE - (self.config.MAZE_SIZE/2) - 1:  
                 if maze[endx][endy] == 0:
                     break
         maze[endx][endy] = 2
@@ -171,7 +173,7 @@ class Maze:
 
             # set current cell to a path cell
             maze[cell_stack[-1][0]][cell_stack[-1][1]] = 0
-            drawMaze(maze, surface, True)
+            drawMaze(maze, surface, True, self.config)
             # get the frontier of the current path cell
             frontier = self.getFrontier(maze, maze_weights, cell_stack[-1][0], cell_stack[-1][1])
 
@@ -200,25 +202,26 @@ class Player:
         self.height = height
         self.width = width
         self.speed = speed
+        self.config = Config()
 
     def detectExit(self, maze, playerx, playery):
         
         
         # top left of player
-        newx_tl = (playerx)//WALL_SIZE
-        newy_tl = (playery)//WALL_SIZE
+        newx_tl = (playerx)//self.config.WALL_SIZE
+        newy_tl = (playery)//self.config.WALL_SIZE
 
         # bottom left of player
-        newx_bl = (playerx)//WALL_SIZE
-        newy_bl = (playery + CUBE_SIZE - 1)//WALL_SIZE
+        newx_bl = (playerx)//self.config.WALL_SIZE
+        newy_bl = (playery + self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
 
         # top right of player
-        newx_tr = (playerx + CUBE_SIZE - 1)//WALL_SIZE
-        newy_tr = (playery)//WALL_SIZE
+        newx_tr = (playerx + self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
+        newy_tr = (playery)//self.config.WALL_SIZE
 
         # botom right of player
-        newx_br = (playerx+ CUBE_SIZE - 1)//WALL_SIZE
-        newy_br = (playery+ CUBE_SIZE - 1)//WALL_SIZE
+        newx_br = (playerx+ self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
+        newy_br = (playery+ self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
 
 
         if maze[newx_tl][newy_tl] == 2 and maze[newx_bl][newy_bl] == 2 and maze[newx_tr][newy_tr] == 2 and maze[newx_br][newy_br] == 2:
@@ -232,24 +235,24 @@ class Player:
     # detect collision based off of the four corners of the player model
     def colliding(self, maze, playerx, playery):
         # top left of player
-        newx_tl = (playerx)//WALL_SIZE
-        newy_tl = (playery)//WALL_SIZE
+        newx_tl = (playerx)//self.config.WALL_SIZE
+        newy_tl = (playery)//self.config.WALL_SIZE
 
         # bottom left of player
-        newx_bl = (playerx)//WALL_SIZE
-        newy_bl = (playery + CUBE_SIZE - 1)//WALL_SIZE
+        newx_bl = (playerx)//self.config.WALL_SIZE
+        newy_bl = (playery + self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
 
         # top right of player
-        newx_tr = (playerx + CUBE_SIZE - 1)//WALL_SIZE
-        newy_tr = (playery)//WALL_SIZE
+        newx_tr = (playerx + self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
+        newy_tr = (playery)//self.config.WALL_SIZE
 
         # botom right of player
-        newx_br = (playerx+ CUBE_SIZE - 1)//WALL_SIZE
-        newy_br = (playery+ CUBE_SIZE - 1)//WALL_SIZE
+        newx_br = (playerx+ self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
+        newy_br = (playery+ self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
 
 
 
-        if newx_tl + 1> MAZE_SIZE or newy_tl+1 > MAZE_SIZE:
+        if newx_tl + 1> self.config.MAZE_SIZE or newy_tl+1 > self.config.MAZE_SIZE:
             return False
         if maze[newx_tl][newy_tl] == 1 or maze[newx_bl][newy_bl] == 1 or maze[newx_tr][newy_tr] == 1 or maze[newx_br][newy_br] == 1:
             return True
@@ -263,10 +266,10 @@ class Player:
 
 
 # draw the maze given a MAZE_SIZE x MAZE_SIZE maze and a surface
-def drawMaze(maze, surface_, generating):
-    for i in range(MAZE_SIZE):
-        for j in range(MAZE_SIZE):
-            r = (WALL_SIZE*i, WALL_SIZE*j, WALL_SIZE, WALL_SIZE)
+def drawMaze(maze, surface_, generating, config):
+    for i in range(config.MAZE_SIZE):
+        for j in range(config.MAZE_SIZE):
+            r = (config.WALL_SIZE*i, config.WALL_SIZE*j, config.WALL_SIZE, config.WALL_SIZE)
             
             if maze[i][j] == 0:
                 pg.draw.rect(surface_, (0, 0, 0), r)
@@ -294,6 +297,10 @@ def main():
     window = pg.display.set_mode((WIDTH, HEIGHT))
     pg.display.set_caption("maze game")
 
+
+    # instantiate config object
+    config = Config()
+
     # Colors
     BLACK = (0, 0, 0)
     RED = (255, 0, 0)
@@ -308,10 +315,10 @@ def main():
 
     #set the maze to a generated one instead of the hardcoded one above
     #maze, player_start = generateMaze(MAZE_SIZE, screen)
-    maze_ = Maze(MAZE_SIZE, WALL_SIZE, screen)
+    maze_ = Maze(config.MAZE_SIZE, config.WALL_SIZE, screen)
     # Player properties
-    player_width, player_height = CUBE_SIZE, CUBE_SIZE
-    player_x, player_y = maze_.start[0] * WALL_SIZE+ 3, maze_.start[1] * WALL_SIZE + 3 #WIDTH // 2, HEIGHT // 2
+    player_width, player_height = config.CUBE_SIZE, config.CUBE_SIZE
+    player_x, player_y = maze_.start[0] * config.WALL_SIZE + 3, maze_.start[1] * config.WALL_SIZE + 3 #WIDTH // 2, HEIGHT // 2
     player_speed = 3
 
     player1 = Player(player_x, player_y, player_width, player_height, player_speed)
@@ -319,7 +326,7 @@ def main():
 
 
     # attempt to draw maze
-    drawMaze(maze_.maze, screen, False)
+    drawMaze(maze_.maze, screen, False, config)
 
 
 
@@ -358,7 +365,7 @@ def main():
         # Draw everything
         screen.fill(BLACK)  # Clear the screen
 
-        drawMaze(maze_.maze, screen, False)
+        drawMaze(maze_.maze, screen, False, config)
 
         pg.draw.rect(screen, RED, (player1.player_x, player1.player_y, player1.width, player1.height))
 
