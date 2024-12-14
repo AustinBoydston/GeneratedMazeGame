@@ -7,23 +7,82 @@ import random
 ############################################ Class Definitions #############################
 
 class Config:
+    """
+    A configuration class to store constants used in the maze game.
+
+    This class defines parameters that control the maze's properties, 
+    player attributes, and gameplay dynamics.
+
+    Attributes:
+        MAZE_SIZE (int): The size of the maze grid (number of cells per side).
+        CUBE_SIZE (int): The size of the player rectangle in pixels.
+        WALL_SIZE (int): The size of each wall block in pixels.
+        PLAYER_SPEED (int): The movement speed of the player in pixels per frame.
+        GENERATE_SPEED (float): The delay in seconds for maze generation animation.
+        OUTER_WALL_WEIGHT (int): The weight value assigned to the outer walls.
+        PATH_WEIGHT (int): The weight value assigned to the path cells.
+        PATH (int): The identifier for path cells in the maze.
+        WALL (int): The identifier for wall cells in the maze.
+        EXIT (int): The identifier for the maze exit cell.
+    """
     MAZE_SIZE = 36 #* 2 # Maze height and width
     CUBE_SIZE = 10 #// 2# Player
     WALL_SIZE = 20 #// 2# Walls
+    PLAYER_SPEED = 3
     GENERATE_SPEED = 0.00001 # time for the sleep function to wait when generating maze
-
+    # weight varibales
+    OUTER_WALL_WEIGHT = 1000
+    PATH_WEIGHT = 500
+    PATH = 0
+    WALL = 1
+    EXIT = 2
 
 
 class Maze:
-    config = Config()
-    def __init__(self, size_n, size_wall, surface):
+    """
+    A class to represent a procedurally generated maze.
+
+    The Maze class creates a 2D grid maze using a randomized algorithm.
+    It handles the generation of the maze layout, including setting up walls, paths, 
+    the start position, and the exit. The maze can also be visualized on a given Pygame surface.
+
+    Attributes:
+        config (Config): Configuration object containing maze parameters.
+        size (int): The size of the maze grid.
+        wall_size (int): The size of each maze cell in pixels.
+        surface (pygame.Surface): The Pygame surface on which the maze is drawn.
+        maze (list[list[int]]): A 2D grid representing the maze layout (0 = path, 1 = wall, 2 = exit).
+        maze_weights (list[list[int]]): A 2D grid for tracking maze generation states.
+        start (tuple[int, int]): The starting position in the maze.
+
+    Methods:
+        chooseRandomStart(size):
+            Randomly selects a starting point inside the maze grid.
+        initMaze(size):
+            Initializes the maze grid with walls and sets boundary weights.
+        chooseExit(maze, start_x, start_y):
+            Selects a random path cell as the exit point far from the start.
+        isValidFrontier(maze, maze_weights, x, y):
+            Checks if a cell is a valid candidate for path expansion.
+        getFrontier(maze, maze_weights, x, y):
+            Finds valid frontier cells around a given cell.
+        digPath(maze, maze_weights, cell_stack, frontier):
+            Converts a wall into a path and updates the frontier list.
+        backTrack(maze, maze_weights, cell_stack):
+            Reverts to the previous cell when no valid frontier exists.
+        generateMaze(maze, maze_weights, size, surface):
+            Generates the maze using a randomized algorithm and visualizes it.
+    """
+    #config = Config()
+    def __init__(self, size_n, size_wall, surface, config):
         self.size = size_n
         self.wall_size = size_wall
         self.surface = surface
+        self.config = config
         self.maze, self.maze_weights = self.initMaze(self.size)
         self.maze, self.maze_weights, self.start = self.generateMaze(self.maze, self.maze_weights, self.size, self.surface)
         self.maze = self.chooseExit(self.maze, self.start[0], self.start[1])
-        self.config = Config()
+        
 
 
     ########## Getter Methods #########
@@ -40,15 +99,15 @@ class Maze:
     # set the outside walls weight value to 1000
     def initMaze(self, size):
         # create the maze 2d array and the maze weights 2d array
-        maze = [[1] * size for i in range(size)]
+        maze = [[self.config.WALL] * size for i in range(size)]
         maze_weights = [[0] * size for i in range(size)]
         # Set the outside wall weights to a high value
         for i in range(size):
             for j in range(size):
                 if i == 0 or i == (size - 1):
-                    maze_weights[i][j] = 1000
+                    maze_weights[i][j] = self.config.OUTER_WALL_WEIGHT
                 if j == 0 or j == (size - 1):
-                    maze_weights[i][j] = 1000
+                    maze_weights[i][j] = self.config.OUTER_WALL_WEIGHT
     
         #print(maze)
         return maze, maze_weights
@@ -56,12 +115,17 @@ class Maze:
 
     # choose a random path cell as the maze exit
     def chooseExit(self, maze, start_x, start_y):
+        counter = 0
         while True:
             endx = random.randint(1, self.config.MAZE_SIZE - 2)
             endy = random.randint(1, self.config.MAZE_SIZE - 2) 
-            if ((start_x - endx)**2)**(1/2) >= self.config.MAZE_SIZE - (self.config.MAZE_SIZE/2) -1 and ((start_y - endy)**2)**(1/2) >= self.config.MAZE_SIZE - (self.config.MAZE_SIZE/2) - 1:  
+            if abs((start_x - endx)) >= self.config.MAZE_SIZE - (self.config.MAZE_SIZE/2) -1 and abs((start_y - endy)) >= self.config.MAZE_SIZE - (self.config.MAZE_SIZE/2) - 1:  
                 if maze[endx][endy] == 0:
                     break
+            counter += 1
+            if counter == 1000:
+                print("ERROR: CHOOSE EXIT TIMEOUT, EXITING PROGRAM")
+                exit()
         maze[endx][endy] = 2
         return maze
 
@@ -114,7 +178,7 @@ class Maze:
         # increment frontier weights (set path weight to 500) to say there is an additional neighbor path cell
         for i in range(len(frontier)):
             if i == random_frontier:
-                maze_weights[frontier[i][0]][frontier[i][1]] = 500    
+                maze_weights[frontier[i][0]][frontier[i][1]] = self.config.PATH_WEIGHT   
             else:
                 maze_weights[frontier[i][0]][frontier[i][1]] += 1
         return maze, maze_weights, cell_stack
@@ -143,7 +207,7 @@ class Maze:
             maze_weights[back_x][back_y-1] -= 1
         #get valid frontier of current cell
         frontier = self.getFrontier(maze, maze_weights, back_x, back_y)
-        print("current position: ", back_x, ", ", back_y, "Valid Frontier: ", frontier)
+        #print("current position: ", back_x, ", ", back_y, "Valid Frontier: ", frontier)
         #time.sleep(.2)
         #check if there are any valid frontier items
         if len(frontier) == 0:
@@ -162,7 +226,7 @@ class Maze:
         cell_stack.append(start)
 
         # set path weight of start cell to 500
-        maze_weights[start[0]][start[1]] = 500
+        maze_weights[start[0]][start[1]] = self.config.PATH_WEIGHT
 
         # the list of valid frontier cells
         frontier = self.getFrontier(maze, maze_weights, start[0], start[1])
@@ -196,35 +260,49 @@ class Maze:
 
 
 class Player:
-    def __init__(self, x, y, width, height, speed):
+    """
+    A class to represent the player in the maze game.
+
+    The Player class handles the player's position, movement, and interactions
+    with the maze, such as collision detection and detecting the maze exit.
+
+    Attributes:
+        player_x (int): The current x-coordinate of the player in pixels.
+        player_y (int): The current y-coordinate of the player in pixels.
+        width (int): The width of the player's rectangle.
+        height (int): The height of the player's rectangle.
+        speed (int): The speed of the player's movement in pixels per frame.
+        config (Config): Configuration object containing maze parameters.
+
+    Methods:
+        detectExit(maze, playerx, playery):
+            Checks if the player's current position corresponds to the maze's exit cell.
+        colliding(maze, playerx, playery):
+            Detects if the player's current position would result in a collision with a wall.
+    """
+
+    def __init__(self, x, y, width, height, speed, config):
         self.player_x = x
         self.player_y = y
         self.height = height
         self.width = width
         self.speed = speed
-        self.config = Config()
+        self.config = config
+
+
+    def getCorners(self, playerx, playery):
+        corners = [
+            (playerx//self.config.WALL_SIZE, playery//self.config.WALL_SIZE),
+            (((playerx + self.config.CUBE_SIZE)//self.config.WALL_SIZE), playery//self.config.WALL_SIZE),
+            (playerx//self.config.WALL_SIZE, (playery + self.config.CUBE_SIZE)//self.config.WALL_SIZE),
+            ((playerx + self.config.CUBE_SIZE)//self.config.WALL_SIZE, (playery + self.config.CUBE_SIZE)//self.config.WALL_SIZE)
+        ]
+        return corners
+
 
     def detectExit(self, maze, playerx, playery):
-        
-        
-        # top left of player
-        newx_tl = (playerx)//self.config.WALL_SIZE
-        newy_tl = (playery)//self.config.WALL_SIZE
-
-        # bottom left of player
-        newx_bl = (playerx)//self.config.WALL_SIZE
-        newy_bl = (playery + self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
-
-        # top right of player
-        newx_tr = (playerx + self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
-        newy_tr = (playery)//self.config.WALL_SIZE
-
-        # botom right of player
-        newx_br = (playerx+ self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
-        newy_br = (playery+ self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
-
-
-        if maze[newx_tl][newy_tl] == 2 and maze[newx_bl][newy_bl] == 2 and maze[newx_tr][newy_tr] == 2 and maze[newx_br][newy_br] == 2:
+        corners = self.getCorners(playerx, playery)
+        if maze[corners[0][0]][corners[0][1]] == 2 and maze[corners[1][0]][corners[1][1]] == 2 and maze[corners[2][0]][corners[2][1]] == 2 and maze[corners[3][0]][corners[3][1]] == 2:
             return True
         else:
             return False
@@ -234,28 +312,9 @@ class Player:
 
     # detect collision based off of the four corners of the player model
     def colliding(self, maze, playerx, playery):
-        # top left of player
-        newx_tl = (playerx)//self.config.WALL_SIZE
-        newy_tl = (playery)//self.config.WALL_SIZE
-
-        # bottom left of player
-        newx_bl = (playerx)//self.config.WALL_SIZE
-        newy_bl = (playery + self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
-
-        # top right of player
-        newx_tr = (playerx + self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
-        newy_tr = (playery)//self.config.WALL_SIZE
-
-        # botom right of player
-        newx_br = (playerx+ self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
-        newy_br = (playery+ self.config.CUBE_SIZE - 1)//self.config.WALL_SIZE
-
-
-
-        if newx_tl + 1> self.config.MAZE_SIZE or newy_tl+1 > self.config.MAZE_SIZE:
-            return False
-        if maze[newx_tl][newy_tl] == 1 or maze[newx_bl][newy_bl] == 1 or maze[newx_tr][newy_tr] == 1 or maze[newx_br][newy_br] == 1:
-            return True
+        corners = self.getCorners(playerx, playery)
+        if maze[corners[0][0]][corners[0][1]] == 1 or maze[corners[1][0]][corners[1][1]] == 1 or maze[corners[2][0]][corners[2][1]] == 1 or maze[corners[3][0]][corners[3][1]] == 1:
+            return True  
         else:
             return False
 
@@ -315,13 +374,13 @@ def main():
 
     #set the maze to a generated one instead of the hardcoded one above
     #maze, player_start = generateMaze(MAZE_SIZE, screen)
-    maze_ = Maze(config.MAZE_SIZE, config.WALL_SIZE, screen)
+    maze_ = Maze(config.MAZE_SIZE, config.WALL_SIZE, screen, config)
     # Player properties
     player_width, player_height = config.CUBE_SIZE, config.CUBE_SIZE
     player_x, player_y = maze_.start[0] * config.WALL_SIZE + 3, maze_.start[1] * config.WALL_SIZE + 3 #WIDTH // 2, HEIGHT // 2
-    player_speed = 3
+    player_speed = config.PLAYER_SPEED
 
-    player1 = Player(player_x, player_y, player_width, player_height, player_speed)
+    player1 = Player(player_x, player_y, player_width, player_height, player_speed, config)
 
 
 
