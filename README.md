@@ -9,7 +9,7 @@
 ### Running the Game
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/maze-game.git
+   git clone https://github.com/AustinBoydston/GeneratedMazeGame.git
    cd maze-game
    ```
 2. Install the dependencies:
@@ -73,7 +73,7 @@ This generation algorithm is similar to Prim's Algorithm in that it starts with 
  5. Increment the weights of all the neighbor cells by 1 (recording the fact that we saw all these neighbors here).
  6. Push the chosen cell onto the stack making it the next current cell
 
-## Future Features (or, why this algorithm)
+## Future Features (or, why this algorithm?)
 The weight matrix of this maze can be used to keep track of further cell types asides from wall, path and exit. This second 2d matrix, in the context of games, can allow a path to be an enemy spawn path cell, a loot/chest having cell, an npc encounter cell, or any other kind of path cell that needs its own sub type. For the specific implementation, a number scheme will need to be chosen to translate the wieght to it's proper subtype, but will still allow the implementation of thousands of sub types while still maintaining O(1) time complexity to process them. Another valuable benefit of this weighted matrix, is it can be preconfigured with a custom weight matrix before the maze is generated to control how the maze carves paths. Tracing out weights of 1000 in weight matrix in the above algorithm will garuntee that no path will be created on cell with those weights allowing great control over the final layout. This could even be used to make "Maze art" where the layout of the maze creates the impression of an image. More use cases likely exist than what was mentioned here!
 ## Acknowledgments
 
