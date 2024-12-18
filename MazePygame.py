@@ -232,7 +232,7 @@ class Maze:
         frontier = self.getFrontier(maze, maze_weights, start[0], start[1])
         # main generation loop
         while True:
-            #time.sleep(GENERATE_SPEED)
+            time.sleep(self.config.GENERATE_SPEED)
 
 
             # set current cell to a path cell
@@ -394,7 +394,7 @@ def main():
     while running:
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                running = False
+                exit()
 
 
         new_x, new_y = player1.player_x, player1.player_y
@@ -413,6 +413,7 @@ def main():
         if not player1.colliding(maze_.maze, new_x, new_y):
             player1.player_x = new_x
             player1.player_y = new_y
+
         #Exit the main function if escape is successful. Generate a new maze.
         if player1.detectExit(maze_.maze, new_x, new_y):
             return 1
@@ -426,6 +427,7 @@ def main():
 
         drawMaze(maze_.maze, screen, False, config)
 
+        # Draw the player
         pg.draw.rect(screen, RED, (player1.player_x, player1.player_y, player1.width, player1.height))
 
 
@@ -442,8 +444,11 @@ def main():
 #initialize pygame
 pg.init()
 
-#infinite game loop
-while True:
+#loop the game 3 times
+for i in range(3):
+    for event in pg.event.get():
+            if event.type == pg.QUIT:
+                exit()
     main()
 
 # Quit pg
