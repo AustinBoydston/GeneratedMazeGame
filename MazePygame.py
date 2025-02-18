@@ -29,13 +29,14 @@ class Config:
     CUBE_SIZE = 10 #// 2# Player
     WALL_SIZE = 20 #// 2# Walls
     PLAYER_SPEED = 3
-    GENERATE_SPEED = 0.00001 # time for the sleep function to wait when generating maze
+    GENERATE_SPEED = 0.1 # time for the sleep function to wait when generating maze
     # weight varibales
     OUTER_WALL_WEIGHT = 1000
     PATH_WEIGHT = 500
     PATH = 0
     WALL = 1
     EXIT = 2
+    FPS = 60
 
 
 class Maze:
@@ -74,13 +75,13 @@ class Maze:
             Generates the maze using a randomized algorithm and visualizes it.
     """
     #config = Config()
-    def __init__(self, size_n, size_wall, surface, config):
+    def __init__(self, size_n, size_wall, surface, config, clock):
         self.size = size_n
         self.wall_size = size_wall
         self.surface = surface
         self.config = config
         self.maze, self.maze_weights = self.initMaze(self.size)
-        self.maze, self.maze_weights, self.start = self.generateMaze(self.maze, self.maze_weights, self.size, self.surface)
+        self.maze, self.maze_weights, self.start = self.generateMaze(self.maze, self.maze_weights, self.size, self.surface, clock)
         self.maze = self.chooseExit(self.maze, self.start[0], self.start[1])
         
 
@@ -218,7 +219,7 @@ class Maze:
         return maze, maze_weights, cell_stack, 1
 
     # Generate the maze
-    def generateMaze(self, maze, maze_weights, size, surface):
+    def generateMaze(self, maze, maze_weights, size, surface, clock):
         start = self.chooseRandomStart(size)
 
         # the main cell stack 
@@ -232,9 +233,13 @@ class Maze:
         frontier = self.getFrontier(maze, maze_weights, start[0], start[1])
         # main generation loop
         while True:
-            time.sleep(self.config.GENERATE_SPEED)
-
-
+            #time.sleep(self.config.GENERATE_SPEED)
+            pg_time = pg.time.get_ticks()
+            clock.tick(Config.FPS)
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    sys.exit()
             # set current cell to a path cell
             maze[cell_stack[-1][0]][cell_stack[-1][1]] = 0
             drawMaze(maze, surface, True, self.config)
@@ -374,7 +379,7 @@ def main():
 
     #set the maze to a generated one instead of the hardcoded one above
     #maze, player_start = generateMaze(MAZE_SIZE, screen)
-    maze_ = Maze(config.MAZE_SIZE, config.WALL_SIZE, screen, config)
+    maze_ = Maze(config.MAZE_SIZE, config.WALL_SIZE, screen, config, clock)
     # Player properties
     player_width, player_height = config.CUBE_SIZE, config.CUBE_SIZE
     player_x, player_y = maze_.start[0] * config.WALL_SIZE + 3, maze_.start[1] * config.WALL_SIZE + 3 #WIDTH // 2, HEIGHT // 2
@@ -395,8 +400,8 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 exit()
-
-
+        pg_time = pg.time.get_ticks()
+        
         new_x, new_y = player1.player_x, player1.player_y
         # Get keys pressed
         keys = pg.key.get_pressed()
@@ -446,10 +451,8 @@ pg.init()
 
 #loop the game 3 times
 for i in range(3):
-    for event in pg.event.get():
-            if event.type == pg.QUIT:
-                exit()
     main()
+   
 
 # Quit pg
 pg.quit()
